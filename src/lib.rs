@@ -9,6 +9,7 @@ pub mod data;
 pub mod error;
 #[cfg(feature = "gamma")]
 pub mod gamma;
+pub mod types;
 
 use std::fmt::Write as _;
 

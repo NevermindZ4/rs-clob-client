@@ -44,8 +44,9 @@ use super::types::response::{
     Comment, Event, HealthResponse, Market, PublicProfile, RelatedTag, SearchResults, Series,
     SportsMarketTypesResponse, SportsMetadata, Tag, Team,
 };
+use crate::Result;
 use crate::error::Error;
-use crate::{Result, ToQueryParams as _};
+use serde_json::Value;
 
 /// HTTP client for the Polymarket Gamma API.
 ///
@@ -111,15 +112,44 @@ impl Client {
         &self.host
     }
 
+    fn to_query_pairs<S: Serialize>(&self, params: S) -> Vec<(String, String)> {
+        let mut pairs = Vec::new();
+
+        if let Ok(Value::Object(map)) = serde_json::to_value(params) {
+            for (key, value) in map {
+                match value {
+                    // Repeat the key for each element
+                    Value::Array(vec) => {
+                        for item in vec {
+                            let val_str = match item {
+                                Value::String(s) => s,
+                                _ => item.to_string().replace('"', ""),
+                            };
+                            pairs.push((key.clone(), val_str));
+                        }
+                    }
+                    Value::Null => {}
+                    Value::String(s) => {
+                        pairs.push((key, s));
+                    }
+                    _ => {
+                        pairs.push((key, value.to_string().replace('"', "")));
+                    }
+                }
+            }
+        }
+        pairs
+    }
+
     async fn get<Req: Serialize, Res: DeserializeOwned + Serialize>(
         &self,
         path: &str,
         req: &Req,
     ) -> Result<Res> {
-        let query = req.query_params(None);
         let request = self
             .client
-            .request(Method::GET, format!("{}{path}{query}", self.host))
+            .request(Method::GET, format!("{}{path}", self.host))
+            .query(&self.to_query_pairs(req))
             .build()?;
         crate::request(&self.client, request, None).await
     }
@@ -243,25 +273,7 @@ impl Client {
 
     /// Lists markets with optional filters.
     pub async fn markets(&self, request: &MarketsRequest) -> Result<Vec<Market>> {
-        // Build base query string using the standard ToQueryParams trait
-        let base_query = request.query_params(None);
-
-        // Build repeated params for clob_token_ids (API expects repeated keys, not comma-separated)
-        let clob_params = request.clob_token_ids_query();
-
-        // Combine query string parts
-        let query = match (base_query.is_empty(), clob_params.is_empty()) {
-            (true, true) => String::new(),
-            (true, false) => format!("?{clob_params}"),
-            (false, true) => base_query,
-            (false, false) => format!("{base_query}&{clob_params}"),
-        };
-
-        let req = self
-            .client
-            .request(Method::GET, format!("{}markets{query}", self.host))
-            .build()?;
-        crate::request(&self.client, req, None).await
+        self.get("markets", request).await
     }
 
     /// Gets a market by ID.

@@ -20,15 +20,15 @@ pub struct TeamsRequest {
     pub offset: Option<i32>,
     pub order: Option<String>,
     pub ascending: Option<bool>,
-    #[serde_as(as = "StringWithSeparator::<CommaSeparator, String>")]
+    //#[serde_as(as = "StringWithSeparator::<CommaSeparator, String>")]
     #[serde(skip_serializing_if = "Vec::is_empty")]
     #[builder(default)]
     pub league: Vec<String>,
-    #[serde_as(as = "StringWithSeparator::<CommaSeparator, String>")]
+    //#[serde_as(as = "StringWithSeparator::<CommaSeparator, String>")]
     #[serde(skip_serializing_if = "Vec::is_empty")]
     #[builder(default)]
     pub name: Vec<String>,
-    #[serde_as(as = "StringWithSeparator::<CommaSeparator, String>")]
+    //#[serde_as(as = "StringWithSeparator::<CommaSeparator, String>")]
     #[serde(skip_serializing_if = "Vec::is_empty")]
     #[builder(default)]
     pub abbreviation: Vec<String>,
@@ -173,22 +173,18 @@ pub struct MarketsRequest {
     pub offset: Option<i32>,
     pub order: Option<String>,
     pub ascending: Option<bool>,
-    #[serde_as(as = "StringWithSeparator::<CommaSeparator, String>")]
     #[serde(skip_serializing_if = "Vec::is_empty")]
     #[builder(default)]
     pub id: Vec<String>,
-    #[serde_as(as = "StringWithSeparator::<CommaSeparator, String>")]
     #[serde(skip_serializing_if = "Vec::is_empty")]
     #[builder(default)]
     pub slug: Vec<String>,
-    #[serde(skip_serializing)]
+    #[serde(skip_serializing_if = "Vec::is_empty")]
     #[builder(default)]
     pub clob_token_ids: Vec<String>,
-    #[serde_as(as = "StringWithSeparator::<CommaSeparator, String>")]
     #[serde(skip_serializing_if = "Vec::is_empty")]
     #[builder(default)]
     pub condition_ids: Vec<String>,
-    #[serde_as(as = "StringWithSeparator::<CommaSeparator, String>")]
     #[serde(skip_serializing_if = "Vec::is_empty")]
     #[builder(default)]
     pub market_maker_address: Vec<String>,
@@ -206,33 +202,15 @@ pub struct MarketsRequest {
     pub cyom: Option<bool>,
     pub uma_resolution_status: Option<String>,
     pub game_id: Option<String>,
-    #[serde_as(as = "StringWithSeparator::<CommaSeparator, String>")]
     #[serde(skip_serializing_if = "Vec::is_empty")]
     #[builder(default)]
     pub sports_market_types: Vec<String>,
     pub rewards_min_size: Option<Decimal>,
-    #[serde_as(as = "StringWithSeparator::<CommaSeparator, String>")]
     #[serde(skip_serializing_if = "Vec::is_empty")]
     #[builder(default)]
     pub question_ids: Vec<String>,
     pub include_tag: Option<bool>,
     pub closed: Option<bool>,
-}
-
-impl MarketsRequest {
-    /// Returns the repeated query parameters for `clob_token_ids`.
-    ///
-    /// The Gamma API expects `clob_token_ids` as repeated query parameters
-    /// (`?clob_token_ids=id1&clob_token_ids=id2`), not comma-separated.
-    /// This method builds that portion of the query string.
-    #[must_use]
-    pub fn clob_token_ids_query(&self) -> String {
-        self.clob_token_ids
-            .iter()
-            .map(|id| format!("clob_token_ids={id}"))
-            .collect::<Vec<_>>()
-            .join("&")
-    }
 }
 
 #[skip_serializing_none]
